@@ -2,10 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 require('dotenv').config();
-
-const { MongoClient, ServerApiVersion } = require('mongodb');
-
 const port = process.env.PORT || 9000;
+const { MongoClient, ServerApiVersion } = require('mongodb');
 
 // Middleware
 app.use(cors());
@@ -29,14 +27,17 @@ async function run() {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
 
+    // MongoDb Database Collection
     const toyCollection = client.db('toybox').collection('Toys');
 
+    // Read Operations Get All Toys
     app.get('/all-toys', async (req, res) => {
         const cursor = toyCollection.find();
         const result = await cursor.toArray();
         res.send(result);
     })
 
+    // Write Operations Add New Toy
     app.post('/add-toy', async (req, res) => {
         const toy = req.body;
         console.log(toy);
