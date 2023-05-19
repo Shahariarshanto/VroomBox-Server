@@ -6,8 +6,22 @@ const port = process.env.PORT || 9000;
 const { MongoClient, ServerApiVersion } = require('mongodb');
 
 // Middleware
-app.use(cors());
+const corsConfig = {
+  origin: '',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE']
+}
+app.use(cors(corsConfig))
+app.options("", cors(corsConfig))
+// app.use(cors());
 app.use(express.json());
+
+// app.use((req, res, next) => {
+//   res.setHeader('Access-Control-Allow-Origin', 'http://localhost:5173');
+//   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+//   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+//   next();
+// });
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.SECRET_PASS}@cluster0.inncnjw.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -25,7 +39,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
 
     // MongoDb Database Collection
     const toyCollection = client.db('toybox').collection('Toys');
