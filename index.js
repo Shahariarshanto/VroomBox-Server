@@ -3,7 +3,7 @@ const cors = require('cors');
 const app = express();
 require('dotenv').config();
 const port = process.env.PORT || 9000;
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 // Middleware
 const corsConfig = {
@@ -16,12 +16,14 @@ app.options("", cors(corsConfig))
 // app.use(cors());
 app.use(express.json());
 
-// app.use((req, res, next) => {
-//   res.setHeader('Access-Control-Allow-Origin', 'http://localhost:5173');
-//   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-//   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-//   next();
-// });
+app.use((req, res, next) => {
+//   res.setHeader('Access-Control-Allow-Origin', 'https://vroombox-server.vercel.app/');
+res.setHeader('Access-Control-Allow-Origin', '*');
+
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  next();
+});
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.SECRET_PASS}@cluster0.inncnjw.mongodb.net/?retryWrites=true&w=majority`;
 
@@ -58,9 +60,7 @@ async function run() {
         if(req.query?.email){
             query = {sellerEmail: req.query.email}
         }
-        // console.log(req.query.email);
-        console.log(query);
-        
+       
         const result = await toyCollection.find(query).toArray();
         res.send(result);
     }   );
@@ -69,16 +69,25 @@ async function run() {
     // Write Operations Add New Toy
     app.post('/add-toy', async (req, res) => {
         const toy = req.body;
-        console.log(toy);
+        
         const result = await toyCollection.insertOne(toy);
         res.send(result);
     });
 
+    // Delete Operations Delete Toy
+    app.delete('/delete-toy/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) }
+      console.log(query);
+      const result = await toyCollection.deleteOne(query);
+      res.send(result);
+  })
+
 
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    // await client.db("admin").command({ ping: 1 });
+    // console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
@@ -93,7 +102,6 @@ app.get('/', (req, res) => {
 );
 
 app.listen(port, () => {
-    console.log(process.env.S3_BUCKET)
     console.log(`vroombox app listening at http://localhost:${port}`)
 }
 );
