@@ -48,7 +48,8 @@ async function run() {
 
     // Read Operations Get All Toys
      app.get('/all-toys', async (req, res) => {
-      const cursor = toyCollection.find().limit(20); //limit the result to 20 documents
+       //limit the result to 20 documents
+      const cursor = toyCollection.find().limit(20);
       const result = await cursor.toArray();
       res.send(result);
   });
