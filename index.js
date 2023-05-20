@@ -35,7 +35,15 @@ async function run() {
 
     // MongoDb Database Collection
     const toyCollection = client.db('toybox').collection('Toys');
+    const bannerImageCollection = client.db('imageBox').collection('images');
 
+    // Read Operations Get bannerImageCollection images
+    app.get('/banner-images', async (req, res) => {
+      const cursor = bannerImageCollection.find().limit(6);
+      const result = await cursor.toArray();
+      res.send(result);
+    }
+    );
     // Read Operations Get All Toys
     app.get('/all-toys', async (req, res) => {
       //limit the result to 20 documents
