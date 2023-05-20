@@ -6,14 +6,14 @@ const port = process.env.PORT || 9000;
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 // Middleware
-const corsConfig = {
-  origin: '',
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE']
-}
-app.use(cors(corsConfig))
-app.options("", cors(corsConfig))
-// app.use(cors());
+// const corsConfig = {
+//   origin: '',
+//   credentials: true,
+//   methods: ['GET', 'POST', 'PUT', 'DELETE']
+// }
+// app.use(cors(corsConfig))
+// app.options("", cors(corsConfig))
+app.use(cors());
 app.use(express.json());
 
 app.use((req, res, next) => {
@@ -47,11 +47,12 @@ async function run() {
     const toyCollection = client.db('toybox').collection('Toys');
 
     // Read Operations Get All Toys
-    app.get('/all-toys', async (req, res) => {
-        const cursor = toyCollection.find();
-        const result = await cursor.toArray();
-        res.send(result);
-    })
+     app.get('/all-toys', async (req, res) => {
+      const cursor = toyCollection.find().limit(20); //limit the result to 20 documents
+      const result = await cursor.toArray();
+      res.send(result);
+  });
+  
 
     //  Operations to Get Data by Email 
      app.get('/toys', async (req, res) => {
@@ -59,11 +60,34 @@ async function run() {
         let query = {};
         if(req.query?.email){
             query = {sellerEmail: req.query.email}
-        }
-       
+        }      
         const result = await toyCollection.find(query).toArray();
         res.send(result);
     }   );
+
+    // Operation Read Get Data By Descending Order
+    app.get('/toys-descending', async (req, res) => {
+      const email = req.query.email;
+      let query = {};
+      if (req.query?.email) {
+        query = { sellerEmail: req.query.email };
+      }
+      const result = await toyCollection.find(query).sort({ _id: -1 }).toArray(); // Sort by _id field in descending order
+      res.send(result);
+  }
+    );
+
+        // Operation Read Get Data By Acceending Order
+        app.get('/toys-ascending', async (req, res) => {
+          const email = req.query.email;
+          let query = {};
+          if (req.query?.email) {
+            query = { sellerEmail: req.query.email };
+          }
+          const result = await toyCollection.find(query).sort({ _id: 1 }).toArray(); // Sort by _id field in descending order
+          res.send(result);
+      }
+        );
 
 
     // Write Operations Add New Toy
@@ -74,11 +98,39 @@ async function run() {
         res.send(result);
     });
 
+    // Update Operations Update Toy
+    app.patch('/update-toy/:id', async (req, res) => {
+      const id = req.params.id;
+      const {
+        updatedPrice,
+        updatedToyName,
+        updatedCategory,
+        updatedQuantity,
+        updatedDescription
+      } = req.body;
+      console.log(req.body)
+    
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          price: updatedPrice,
+          toyName: updatedToyName,
+          category: updatedCategory,
+          quantity: updatedQuantity,
+          description: updatedDescription
+        },
+      };
+    
+      const result = await toyCollection.updateOne(filter, updateDoc, options);
+      res.send(result);
+    });
+    
+
     // Delete Operations Delete Toy
     app.delete('/delete-toy/:id', async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) }
-      console.log(query);
       const result = await toyCollection.deleteOne(query);
       res.send(result);
   })
