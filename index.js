@@ -6,27 +6,19 @@ const port = process.env.PORT || 9000;
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 // Middleware
-// const corsConfig = {
-//   origin: '',
-//   credentials: true,
-//   methods: ['GET', 'POST', 'PUT', 'DELETE']
-// }
 // app.use(cors(corsConfig))
 // app.options("", cors(corsConfig))
 app.use(cors());
 app.use(express.json());
-
 app.use((req, res, next) => {
-//   res.setHeader('Access-Control-Allow-Origin', 'https://vroombox-server.vercel.app/');
-res.setHeader('Access-Control-Allow-Origin', '*');
-
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   next();
 });
 
+// MongoDB Connection URL
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.SECRET_PASS}@cluster0.inncnjw.mongodb.net/?retryWrites=true&w=majority`;
-
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
   serverApi: {
@@ -35,8 +27,6 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   }
 });
-
-
 
 async function run() {
   try {
@@ -47,24 +37,23 @@ async function run() {
     const toyCollection = client.db('toybox').collection('Toys');
 
     // Read Operations Get All Toys
-     app.get('/all-toys', async (req, res) => {
-       //limit the result to 20 documents
+    app.get('/all-toys', async (req, res) => {
+      //limit the result to 20 documents
       const cursor = toyCollection.find().limit(20);
       const result = await cursor.toArray();
       res.send(result);
-  });
-  
+    });
 
     //  Operations to Get Data by Email 
-     app.get('/toys', async (req, res) => {
-        const email = req.query.email;
-        let query = {};
-        if(req.query?.email){
-            query = {sellerEmail: req.query.email}
-        }      
-        const result = await toyCollection.find(query).toArray();
-        res.send(result);
-    }   );
+    app.get('/toys', async (req, res) => {
+      const email = req.query.email;
+      let query = {};
+      if (req.query?.email) {
+        query = { sellerEmail: req.query.email }
+      }
+      const result = await toyCollection.find(query).toArray();
+      res.send(result);
+    });
 
     // Operation Read Get Data By Descending Order
     app.get('/toys-descending', async (req, res) => {
@@ -75,28 +64,41 @@ async function run() {
       }
       const result = await toyCollection.find(query).sort({ _id: -1 }).toArray(); // Sort by _id field in descending order
       res.send(result);
-  }
+    }
     );
 
-        // Operation Read Get Data By Acceending Order
-        app.get('/toys-ascending', async (req, res) => {
-          const email = req.query.email;
-          let query = {};
-          if (req.query?.email) {
-            query = { sellerEmail: req.query.email };
-          }
-          const result = await toyCollection.find(query).sort({ _id: 1 }).toArray(); // Sort by _id field in descending order
-          res.send(result);
+    // Operation Read Get Data By Acceending Order
+    app.get('/toys-ascending', async (req, res) => {
+      const email = req.query.email;
+      let query = {};
+      if (req.query?.email) {
+        query = { sellerEmail: req.query.email };
       }
-        );
+      const result = await toyCollection.find(query).sort({ _id: 1 }).toArray(); // Sort by _id field in descending order
+      res.send(result);
+    }
+    );
 
+    // Read Operation By Category
+    app.get('/toys-category/:category', async (req, res) => {
+      const category = req.params.category;
+      const result = await toyCollection.find({ subCategory: category }).limit(6).toArray();
+      res.send(result);
+    }
+    );
+
+    // Send Only pictureUrl by get
+    app.get('/toys-picture', async (req, res) => {
+      const result = await toyCollection.find().project({ pictureUrl: 1 }).toArray();
+      res.send(result);
+    }
+    );
 
     // Write Operations Add New Toy
     app.post('/add-toy', async (req, res) => {
-        const toy = req.body;
-        
-        const result = await toyCollection.insertOne(toy);
-        res.send(result);
+      const toy = req.body;
+      const result = await toyCollection.insertOne(toy);
+      res.send(result);
     });
 
     // Update Operations Update Toy
@@ -110,7 +112,7 @@ async function run() {
         updatedDescription
       } = req.body;
       console.log(req.body)
-    
+
       const filter = { _id: new ObjectId(id) };
       const options = { upsert: true };
       const updateDoc = {
@@ -122,11 +124,10 @@ async function run() {
           description: updatedDescription
         },
       };
-    
       const result = await toyCollection.updateOne(filter, updateDoc, options);
       res.send(result);
     });
-    
+
 
     // Delete Operations Delete Toy
     app.delete('/delete-toy/:id', async (req, res) => {
@@ -134,8 +135,7 @@ async function run() {
       const query = { _id: new ObjectId(id) }
       const result = await toyCollection.deleteOne(query);
       res.send(result);
-  })
-
+    })
 
 
     // Send a ping to confirm a successful connection
@@ -148,14 +148,13 @@ async function run() {
 }
 run().catch(console.dir);
 
-
 app.get('/', (req, res) => {
-    res.send('Hello vroombox!')
-}   
+  res.send('Wellcome to vroombox Server!')
+}
 );
 
 app.listen(port, () => {
-    console.log(`vroombox app listening at http://localhost:${port}`)
+  console.log(`vroombox app listening at http://localhost:${port}`)
 }
 );
 
