@@ -44,13 +44,23 @@ async function run() {
       res.send(result);
     }
     );
-    // Read Operations Get All Toys
+
+    //   Read Operations Get All Toys with Pagination
     app.get('/all-toys', async (req, res) => {
-      //limit the result to 20 documents
-      const cursor = toyCollection.find().limit(20);
-      const result = await cursor.toArray();
-      res.send(result);
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      const skipCount = (page - 1) * limit;
+      const totalCount = await toyCollection.countDocuments();
+      const totalPages = Math.ceil(totalCount / limit);
+      const cursor = toyCollection.find().skip(skipCount).limit(limit);
+      const toys = await cursor.toArray();
+      res.json({
+        toys,
+        currentPage: page,
+        totalPages,
+      });
     });
+
 
     //  Operations to Get Data by Email 
     app.get('/toys', async (req, res) => {
